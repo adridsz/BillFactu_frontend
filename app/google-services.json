@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "585765669761",
+    "project_id": "billfactuapp",
+    "storage_bucket": "billfactuapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:585765669761:android:171a2a49dd8461b653f680",
+        "android_client_info": {
+          "package_name": "com.example.billfactu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzfZAq4acmTQDa27EE4mTk1O2BGdVD0YM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
