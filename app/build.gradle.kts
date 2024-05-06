@@ -35,6 +35,8 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
     implementation("com.google.firebase:firebase-crashlytics")
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.squareup.okhttp3:okhttp:4.9.1")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
