@@ -1,10 +1,12 @@
 package com.example.billfactu;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -54,6 +56,24 @@ public class MainActivity extends AppCompatActivity {
                 public void onFailure(Call call, IOException e) {
                     // Manejar el error
                     e.printStackTrace();
+
+                    // Mostrar un diálogo de alerta en el hilo de la interfaz de usuario
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            new AlertDialog.Builder(MainActivity.this)
+                                    .setTitle("Error de conexión")
+                                    .setMessage("No se pudo conectar al servidor. ¿Deseas reintentar?")
+                                    .setPositiveButton("Reintentar", new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            // Reintentar la conexión
+                                        }
+                                    })
+                                    .setNegativeButton("Cancelar", null)
+                                    .setIcon(android.R.drawable.ic_dialog_alert)
+                                    .show();
+                        }
+                    });
                 }
 
                 @Override
