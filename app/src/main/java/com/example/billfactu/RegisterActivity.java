@@ -120,7 +120,7 @@ public class RegisterActivity extends AppCompatActivity {
                         editor.apply();
 
                         // Navegar a la actividad principal
-                        Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
+                        Intent intent = new Intent(RegisterActivity.this, Inicio.class);
                         startActivity(intent);
                         finish();
 
