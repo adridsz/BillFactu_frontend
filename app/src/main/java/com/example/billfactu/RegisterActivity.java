@@ -119,8 +119,9 @@ public class RegisterActivity extends AppCompatActivity {
                         editor.putBoolean("esJefe", esJefe); // Usar el valor de la casilla de verificación directamente
                         editor.apply();
 
-                        // Navegar a la actividad principal
-                        Intent intent = new Intent(RegisterActivity.this, Inicio.class);
+                        // Navegar a la seleccion de empresas
+                        Intent intent = new Intent(RegisterActivity.this, EleccionEmpresasActivity.class);
+                        intent.putExtra("esJefe", esJefe); // Añadir el valor de la casilla de verificación como un extra
                         startActivity(intent);
                         finish();
 
