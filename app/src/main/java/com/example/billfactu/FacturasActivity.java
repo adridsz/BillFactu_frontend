@@ -1,18 +1,21 @@
 package com.example.billfactu;
 
+
+import android.app.DownloadManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.ProgressBar;
+import android.os.Environment;
+import android.widget.Toast;
+import android.Manifest;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -20,7 +23,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.Call;
@@ -33,9 +35,10 @@ import okhttp3.Response;
 
 public class FacturasActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
-    private ProgressBar progressBar;
     private FechaAdapter fechaAdapter;
-    private List<String> fechas = new ArrayList<>();
+    private List<String> fechas;
+    private String nombreEmpresa;
+    private static final int PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,96 +46,90 @@ public class FacturasActivity extends AppCompatActivity {
         setContentView(R.layout.activity_facturas);
 
         recyclerView = findViewById(R.id.recyclerView);
-        progressBar = findViewById(R.id.progressBar);
-
-        // Obtener las fechas del Intent
         fechas = getIntent().getStringArrayListExtra("fechas");
-
-        // Agregar un registro de depuración aquí
-        Log.d("FacturasActivity", "Fechas: " + fechas);
+        nombreEmpresa = getIntent().getStringExtra("nombreEmpresa");
 
         fechaAdapter = new FechaAdapter(fechas, new FechaAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(String fecha) {
-                descargarFactura(fecha);
+                if (ContextCompat.checkSelfPermission(FacturasActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    // Permiso no concedido, solicítalo
+                    ActivityCompat.requestPermissions(FacturasActivity.this,
+                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+                } else {
+                    // Permiso ya concedido, puedes proceder con la descarga
+                    descargarFactura(nombreEmpresa, fecha);
+                }
             }
         });
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(fechaAdapter);
-
-        fechaAdapter.notifyDataSetChanged();
     }
 
-    private void descargarFactura(String fecha) {
-        // Mostrar ProgressBar
-        progressBar.setVisibility(View.VISIBLE);
-        // Obtener el nombre de la empresa del Intent
-        String nombreEmpresa = getIntent().getStringExtra("nombreEmpresa");
-
-        // Obtener el token del usuario de SharedPreferences
+    private void descargarFactura(String nombreEmpresa, String fecha) {
         SharedPreferences sharedPreferences = getSharedPreferences("MisPreferencias", MODE_PRIVATE);
         String token = sharedPreferences.getString("token", "");
 
         OkHttpClient client = new OkHttpClient();
         String url = Server.URL + "descargarfactura/";
 
-        // Crear el cuerpo de la solicitud en formato JSON
         MediaType JSON = MediaType.parse("application/json; charset=utf-8");
         JSONObject jsonObject = new JSONObject();
         try {
-            jsonObject.put("fecha", fecha);
-            // Aquí debes agregar el nombre de la empresa
             jsonObject.put("empresa", nombreEmpresa);
+            jsonObject.put("fecha", fecha);
         } catch (JSONException e) {
             e.printStackTrace();
         }
         RequestBody body = RequestBody.create(JSON, jsonObject.toString());
 
-        // Crear la solicitud
         Request request = new Request.Builder()
                 .url(url)
                 .post(body)
                 .addHeader("Authorization", token)
                 .build();
 
-        // Enviar la solicitud y manejar la respuesta
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                // Manejar el error
                 e.printStackTrace();
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 if (response.isSuccessful()) {
-                    // Manejar la respuesta exitosa
                     String responseStr = response.body().string();
-
-                    // Parsear la respuesta a JSON
                     try {
                         JSONObject jsonObject = new JSONObject(responseStr);
-                        String urlFactura = jsonObject.getString("factura");
+                        String facturaUrl = jsonObject.getString("factura");
 
-                        // Aquí debes implementar la lógica para abrir el archivo de la factura
-                        // Por ejemplo, puedes abrir el archivo en un navegador web
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(urlFactura));
-                        startActivity(intent);
+                        // Concatenar la URL base del servidor con la URL relativa de la factura
+                        String fullFacturaUrl = Server.URL + facturaUrl;
+
+                        // Ahora puedes usar fullFacturaUrl para iniciar la descarga
+                        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(fullFacturaUrl));
+                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "Factura.pdf");
+
+                        DownloadManager downloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                        downloadManager.enqueue(request);
+
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 } else {
                     // Manejar la respuesta no exitosa
                 }
-
-                // Ocultar ProgressBar
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        progressBar.setVisibility(View.GONE);
-                    }
-                });
             }
         });
+    }
+
+    private void abrirFactura(Uri uri) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(uri, "application/pdf");
+        intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        startActivity(intent);
     }
 }

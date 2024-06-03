@@ -22,6 +22,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -106,7 +107,7 @@ public class FacturasFragment extends Fragment {
 
     private void selectFile() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("*/*");
+        intent.setType("application/pdf");
         startActivityForResult(intent, PICK_FILE_REQUEST_CODE);
     }
 
@@ -123,44 +124,60 @@ public class FacturasFragment extends Fragment {
         // Crear el cliente HTTP
         OkHttpClient client = new OkHttpClient();
 
+        // Usar la fecha seleccionada
+        String fecha = selectedYear + "-" + String.format("%02d", selectedMonth + 1) + "-" + String.format("%02d", selectedDay);
+
+        // Crear el cuerpo de la solicitud
+        MultipartBody.Builder builder = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("fecha", fecha);
+
         // Intentar abrir un InputStream del archivo seleccionado
         try {
             InputStream inputStream = getContext().getContentResolver().openInputStream(selectedFileUri);
-            RequestBody requestBody = RequestBody.create(MediaType.parse(getContext().getContentResolver().getType(selectedFileUri)), inputStream.toString());
-
-            // Usar la fecha seleccionada
-            String fecha = selectedYear + "-" + String.format("%02d", selectedMonth + 1) + "-" + String.format("%02d", selectedDay);
-
-            // Crear el cuerpo de la solicitud
-            MultipartBody multipartBody = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("fecha", fecha)
-                    .addFormDataPart("factura", "factura", requestBody)
-                    .build();
-
-            // Crear la solicitud
-            Request request = new Request.Builder()
-                    .url(Server.URL + "subirfactura/")
-                    .post(multipartBody)
-                    .addHeader("Authorization", token)
-                    .build();
-
-            // Enviar la solicitud y manejar la respuesta
-            client.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    // Manejar el error
-                    e.printStackTrace();
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    // Manejar la respuesta
-                }
-            });
+            byte[] fileBytes = getBytes(inputStream);
+            RequestBody requestBody = RequestBody.create(MediaType.parse(getContext().getContentResolver().getType(selectedFileUri)), fileBytes);
+            builder.addFormDataPart("factura", "factura", requestBody);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+        MultipartBody multipartBody = builder.build();
+
+        // Crear la solicitud
+        Request request = new Request.Builder()
+                .url(Server.URL + "subirfactura/")
+                .post(multipartBody)
+                .addHeader("Authorization", token)
+                .build();
+
+        // Enviar la solicitud y manejar la respuesta
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                // Manejar el error
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                // Manejar la respuesta
+            }
+        });
+    }
+
+    private byte[] getBytes(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
+        int bufferSize = 1024;
+        byte[] buffer = new byte[bufferSize];
+
+        int len;
+        while ((len = inputStream.read(buffer)) != -1) {
+            byteBuffer.write(buffer, 0, len);
+        }
+        return byteBuffer.toByteArray();
     }
 
     private void obtenerEmpresas() {
