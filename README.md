@@ -62,4 +62,4 @@ Este proyecto ha sido desarrollado utilizando las siguientes tecnologías:
 
 <h2 align="center"> 📄 Licencia </h2>
 
-Este proyecto está bajo la Licencia MIT - mira el archivo [LICENSE.md](LICENSE.md) para detalles
+Este proyecto está bajo la Licencia MIT - mira el archivo [LICENSE](LICENSE) para detalles
