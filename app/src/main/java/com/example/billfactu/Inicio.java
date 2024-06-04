@@ -63,6 +63,7 @@ public class Inicio extends AppCompatActivity {
         // Leer el token de las SharedPreferences
         SharedPreferences sharedPreferences = getSharedPreferences("MisPreferencias", MODE_PRIVATE);
         String token = sharedPreferences.getString("token", "");
+        Boolean esJefe = sharedPreferences.getBoolean("esJefe", false);
 
         // Crear el cliente HTTP
         OkHttpClient client = new OkHttpClient();
