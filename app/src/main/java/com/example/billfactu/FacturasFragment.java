@@ -163,7 +163,12 @@ public class FacturasFragment extends Fragment {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                // Manejar la respuesta
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getContext(), "Factura subida correctamente", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
     }
