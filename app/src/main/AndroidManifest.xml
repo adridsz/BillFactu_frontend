@@ -18,6 +18,9 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".PreFacturasActivity"
+            android:exported="false" />
+        <activity
             android:name=".FacturasActivity"
             android:exported="false" />
         <activity

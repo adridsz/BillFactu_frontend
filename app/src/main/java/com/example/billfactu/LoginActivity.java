@@ -106,6 +106,11 @@ public class LoginActivity extends AppCompatActivity {
                             editor.putBoolean("esJefe", esJefe);
                             editor.apply();
 
+                            // Navegar a la actividad Inicio
+                            Intent intent = new Intent(LoginActivity.this, Inicio.class);
+                            startActivity(intent);
+                            finish(); // Finalizar la actividad de inicio de sesión
+
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
